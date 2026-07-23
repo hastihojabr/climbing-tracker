@@ -166,7 +166,7 @@ h1 {
 
 #sessionGradeScoreRow {
 
-    font-size:22px;
+    font-size:22px; margin-top: 30px;
 
 }
 
@@ -572,7 +572,7 @@ Grade 1
 
 <div class="row">
 
-Attempts
+Attempt
 
 <div>
 
@@ -600,7 +600,7 @@ onclick="change('attempts',1)">
 
 <div class="row">
 
-Tops
+Top
 
 <div>
 
@@ -834,7 +834,7 @@ style="display:none;">
 
 <div class="row">
 
-Attempts
+Attempt
 
 <div>
 
@@ -849,7 +849,7 @@ Attempts
 
 <div class="row">
 
-Tops
+Top
 
 <div>
 
@@ -930,6 +930,28 @@ class="history">
 
 
 
+<button class="action save"
+onclick="exportData()">
+⬇️ Export Data
+</button>
+
+
+<button class="action secondary"
+onclick="document.getElementById('importFileInput').click()">
+⬆️ Import Data
+</button>
+
+
+<input type="file"
+id="importFileInput"
+accept="application/json,.json"
+style="display:none;"
+onchange="importData(event)">
+
+
+<br>
+
+
 <button class="action reset"
 onclick="deleteData()">
 Delete All Data
@@ -977,11 +999,11 @@ Delete All Data
 
 <div id="storyCard" style="position:fixed; left:-9999px; top:0; width:1080px; height:1920px; background:linear-gradient(160deg,#1c1c1e 0%,#3a1c71 45%,#007aff 100%); color:white; font-family:-apple-system,BlinkMacSystemFont,Arial,sans-serif; box-sizing:border-box; padding:90px 70px; text-align:center;">
 
-<img src="icon2.png" style="width:110px; height:110px; border-radius:24px;">
+<img src="icon2.png" style="width:200px; height:200px; border-radius:24px;">
 
-<div style="font-size:56px; font-weight:700; margin-top:30px;">Climbing Session Complete!</div>
+<div style="font-size:56px; font-weight:700; margin-top:-14px;">Climbing Session Complete!</div>
 
-<div style="font-size:32px; opacity:0.75; margin-top:14px;" id="storyDate">Today</div>
+<div style="font-size:32px; opacity:0.75; margin-top:24px;" id="storyDate">Today</div>
 
 <hr style="border:none; border-top:2px solid rgba(255,255,255,0.25); margin:50px 0;">
 
@@ -2075,21 +2097,26 @@ function loadHistory(){
 
 
 
-    sessions.slice().reverse().forEach(session=>{
+    sessions.slice().reverse().forEach((session, reversedIndex)=>{
+
+
+        let originalIndex = sessions.length - 1 - reversedIndex;
 
 
         let div =
         document.createElement("div");
 
-        let left = document.createElement("span");
-        left.innerHTML = session.date;
+        let info = document.createElement("span");
+        info.innerHTML = session.date + " — Score: " + session.total;
 
-        let right = document.createElement("span");
-        right.innerHTML = "Score: " + session.total;
+        let del = document.createElement("span");
+        del.innerHTML = "🗑";
+        del.style.cursor = "pointer";
+        del.style.marginLeft = "12px";
+        del.onclick = function(){ deleteSession(originalIndex); };
 
-        div.appendChild(left);
-        div.appendChild(right);
-
+        div.appendChild(info);
+        div.appendChild(del);
 
 
         box.appendChild(div);
@@ -2097,6 +2124,194 @@ function loadHistory(){
 
 
     });
+
+
+}
+
+
+
+
+function deleteSession(index){
+
+
+    let sessions =
+    JSON.parse(
+    localStorage.getItem("sessions")
+    ) || [];
+
+
+    if(index < 0 || index >= sessions.length) return;
+
+
+    if(!confirm("Delete the session from " + sessions[index].date + "?")) return;
+
+
+    sessions.splice(index, 1);
+
+
+    localStorage.setItem(
+        "sessions",
+        JSON.stringify(sessions)
+    );
+
+
+    loadHistory();
+
+    drawCharts();
+
+
+}
+
+
+
+
+function exportData(){
+
+
+    let sessions =
+    JSON.parse(
+    localStorage.getItem("sessions")
+    ) || [];
+
+
+    let exportObj = {
+
+        exportedAt: getLocalDateString(),
+
+        sessions: sessions
+
+    };
+
+
+    let blob = new Blob(
+        [JSON.stringify(exportObj, null, 2)],
+        { type:"application/json" }
+    );
+
+
+    let url = URL.createObjectURL(blob);
+
+    let link = document.createElement("a");
+
+    link.href = url;
+
+    link.download = "climbing-data-" + getLocalDateString() + ".json";
+
+    document.body.appendChild(link);
+
+    link.click();
+
+    document.body.removeChild(link);
+
+    URL.revokeObjectURL(url);
+
+
+}
+
+
+
+
+function importData(event){
+
+
+    let file = event.target.files[0];
+
+    if(!file) return;
+
+
+    let reader = new FileReader();
+
+
+    reader.onload = function(e){
+
+
+        let imported;
+
+
+        try{
+
+            imported = JSON.parse(e.target.result);
+
+        }catch(err){
+
+            alert("That file doesn't look like valid exported data.");
+
+            event.target.value = "";
+
+            return;
+
+        }
+
+
+        let importedSessions =
+            Array.isArray(imported) ? imported :
+            (imported.sessions && Array.isArray(imported.sessions)) ? imported.sessions :
+            null;
+
+
+        if(!importedSessions){
+
+            alert("That file doesn't look like valid exported data.");
+
+            event.target.value = "";
+
+            return;
+
+        }
+
+
+        let existing =
+        JSON.parse(
+        localStorage.getItem("sessions")
+        ) || [];
+
+
+        let existingKeys = new Set(
+            existing.map(s => JSON.stringify(s))
+        );
+
+
+        let added = 0;
+
+
+        importedSessions.forEach(s=>{
+
+            let key = JSON.stringify(s);
+
+            if(!existingKeys.has(key)){
+
+                existing.push(s);
+
+                existingKeys.add(key);
+
+                added++;
+
+            }
+
+        });
+
+
+        localStorage.setItem(
+            "sessions",
+            JSON.stringify(existing)
+        );
+
+
+        loadHistory();
+
+        drawCharts();
+
+
+        alert(added + " session(s) imported.");
+
+
+        event.target.value = "";
+
+
+    };
+
+
+    reader.readAsText(file);
 
 
 }
@@ -2568,6 +2783,23 @@ function drawGradeChart(){
 
 
             responsive:true,
+
+
+            plugins:{
+
+                legend:{
+
+                    labels:{
+
+                        boxWidth:10,
+
+                        boxHeight:10
+
+                    }
+
+                }
+
+            },
 
 
             scales:{
