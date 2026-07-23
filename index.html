@@ -1,0 +1,2237 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <link rel="apple-touch-icon" sizes="180x180" href="icon.png">
+
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Climbing Tracker">
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Climbing Tracker</title>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+
+<style>
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, Arial, sans-serif;
+    background:#f2f2f7;
+    margin:0;
+    padding:20px;
+    text-align:center;
+}
+
+
+h1 {
+    font-size:32px;
+}
+
+
+.nav {
+    display:flex;
+    justify-content:center;
+    gap:10px;
+}
+
+
+.nav button {
+    padding:12px 25px;
+    border:none;
+    border-radius:20px;
+    font-size:18px;
+}
+
+
+.active {
+    background:#007aff;
+    color:white;
+}
+
+
+
+.card {
+
+    background:white;
+    border-radius:25px;
+    padding:25px;
+    margin:20px auto;
+    max-width:380px;
+
+    box-shadow:
+    0 5px 15px rgba(0,0,0,0.15);
+
+    text-align:left;
+
+}
+
+
+
+.gradeButtons {
+
+    display:flex;
+    flex-wrap:wrap;
+    justify-content:center;
+
+    margin-bottom:18px;
+    margin-top:18px;
+
+}
+
+
+
+.gradeButtons button {
+
+    width:55px;
+    height:45px;
+
+    margin:5px;
+
+    border:none;
+    border-radius:14px;
+
+    font-size:18px;
+
+}
+
+
+
+.selected {
+
+    outline:3px solid #007aff;
+    outline-offset:2px;
+    transform:scale(1.06);
+
+}
+
+
+
+.row {
+
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+
+    font-size:22px;
+
+    margin:20px 0;
+
+}
+
+
+
+.counter {
+
+    display:inline-block;
+    width:40px;
+    text-align:center;
+
+    font-size:28px;
+
+}
+
+
+
+.smallBtn {
+
+    width:55px;
+    height:55px;
+
+    border-radius:50%;
+
+    border:none;
+
+    font-size:30px;
+
+}
+
+
+
+.score {
+
+    font-size:20px;
+    font-weight:normal;
+    text-align:center;
+
+    margin:12px 0;
+
+}
+
+
+#sessionGradeScoreRow {
+
+    font-size:24px;
+
+}
+
+
+#totalScore {
+
+    font-size:32px;
+
+}
+
+
+
+.action {
+
+    padding:15px 25px;
+
+    margin:10px;
+
+    border:none;
+
+    border-radius:15px;
+
+    font-size:18px;
+
+}
+
+
+
+.save {
+
+    background:#34c759;
+    color:white;
+
+}
+
+
+
+.reset {
+
+    background:#ff3b30;
+    color:white;
+
+}
+
+
+
+.secondary {
+
+    background:#e5e5ea;
+    color:#007aff;
+
+}
+
+
+
+#progressPage {
+
+    display:none;
+
+}
+
+
+
+input {
+
+    font-size:18px;
+
+    padding:10px;
+
+    border-radius:10px;
+
+    border:1px solid #ccc;
+
+}
+
+
+
+.history {
+
+    text-align:left;
+
+}
+
+
+
+.history div {
+
+    background:#eee;
+
+    padding:12px;
+
+    margin:8px;
+
+    border-radius:12px;
+
+    display:flex;
+    justify-content:space-between;
+
+}
+
+
+
+canvas {
+
+    margin-top:10px;
+
+}
+
+
+/* --- Apple Health style range picker --- */
+
+.segmented {
+
+    display:flex;
+    background:#e5e5ea;
+    border-radius:12px;
+    padding:3px;
+    margin:0 auto 15px auto;
+    max-width:380px;
+
+}
+
+
+.segmented button {
+
+    flex:1;
+    border:none;
+    background:transparent;
+    padding:10px 0;
+    border-radius:9px;
+    font-size:15px;
+    font-weight:500;
+    color:#3a3a3c;
+
+}
+
+
+.segmented button.active {
+
+    background:white;
+    box-shadow:0 1px 3px rgba(0,0,0,0.25);
+    color:#000;
+    font-weight:700;
+
+}
+
+
+.rangeNav {
+
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+
+}
+
+
+.rangeNav button {
+
+    background:none;
+    border:none;
+    font-size:26px;
+    color:#007aff;
+    padding:0 8px;
+
+}
+
+
+.rangeNav button:disabled {
+
+    color:#c7c7cc;
+
+}
+
+
+.rangeLabel {
+
+    font-size:14px;
+    color:#8e8e93;
+    font-weight:600;
+
+}
+
+
+.summaryBig {
+
+    font-size:36px;
+    font-weight:bold;
+    margin-top:5px;
+
+}
+
+
+.summarySub {
+
+    color:#8e8e93;
+    font-size:14px;
+    margin-bottom:10px;
+
+}
+
+
+
+/* --- Modal --- */
+
+.modalOverlay {
+
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,0.45);
+    align-items:center;
+    justify-content:center;
+    z-index:999;
+    padding:20px;
+    box-sizing:border-box;
+
+}
+
+
+.modalOverlay.show {
+
+    display:flex;
+
+}
+
+
+.modalCard {
+
+    background:white;
+    border-radius:28px;
+    padding:30px 25px;
+    max-width:380px;
+    width:100%;
+    max-height:85vh;
+    overflow-y:auto;
+    text-align:center;
+
+}
+
+
+.modalTitle {
+
+    font-size:26px;
+    font-weight:700;
+    margin-bottom:5px;
+
+}
+
+
+.modalDate {
+
+    color:#8e8e93;
+    font-size:14px;
+    margin-bottom:20px;
+
+}
+
+
+.modalTotal {
+
+    font-size:44px;
+    font-weight:800;
+    color:#007aff;
+    margin-bottom:20px;
+
+}
+
+
+.gradeRow {
+
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    background:#f2f2f7;
+    border-radius:14px;
+    padding:12px 16px;
+    margin-bottom:8px;
+    text-align:left;
+
+}
+
+
+.gradeRow .g {
+
+    font-weight:700;
+
+}
+
+
+.gradeRow .detail {
+
+    font-size:12px;
+    color:#8e8e93;
+
+}
+
+
+.modalClose {
+
+    background:#e5e5ea;
+    border:none;
+    border-radius:15px;
+    padding:14px 20px;
+    font-size:17px;
+    font-weight:600;
+    margin-top:15px;
+    width:100%;
+
+}
+
+
+</style>
+
+
+</head>
+
+
+
+<body>
+
+
+
+<h1><img src="icon2.png" alt="Bouldering icon" style="width:36px; height:36px; vertical-align:middle; border-radius:8px; margin-bottom:3px ;margin-right:8px,;"> Climbing Tracker</h1>
+
+
+<div class="nav">
+
+<button id="sessionButton"
+class="active"
+onclick="showSession()">
+Session
+</button>
+
+
+<button id="progressButton"
+onclick="showProgress()">
+Progress
+</button>
+
+</div>
+
+
+
+
+<!-- SESSION PAGE -->
+
+<div id="sessionPage">
+
+
+<div class="gradeButtons"
+id="gradeButtons">
+</div>
+
+
+
+<div class="card">
+
+
+<h2 id="gradeTitle">
+Grade 1
+</h2>
+
+
+
+<div class="row">
+
+Attempts
+
+<div>
+
+<button class="smallBtn"
+onclick="change('attempts',-1)">
+−
+</button>
+
+<span id="attempts"
+class="counter">
+0
+</span>
+
+<button class="smallBtn"
+onclick="change('attempts',1)">
++
+</button>
+
+</div>
+
+</div>
+
+
+
+
+<div class="row">
+
+Tops
+
+<div>
+
+<button class="smallBtn"
+onclick="change('tops',-1)">
+−
+</button>
+
+<span id="tops"
+class="counter">
+0
+</span>
+
+<button class="smallBtn"
+onclick="change('tops',1)">
++
+</button>
+
+</div>
+
+</div>
+
+
+
+
+<div class="row">
+
+Session Flash
+
+<div>
+
+<button class="smallBtn"
+onclick="change('soft',-1)">
+−
+</button>
+
+<span id="soft"
+class="counter">
+0
+</span>
+
+<button class="smallBtn"
+onclick="change('soft',1)">
++
+</button>
+
+</div>
+
+</div>
+
+
+
+
+<div class="row">
+
+Flash
+
+<div>
+
+<button class="smallBtn"
+onclick="change('falls',-1)">
+−
+</button>
+
+<span id="falls"
+class="counter">
+0
+</span>
+
+<button class="smallBtn"
+onclick="change('falls',1)">
++
+</button>
+
+</div>
+
+</div>
+
+
+
+<div class="score" id="sessionGradeScoreRow">
+
+Grade Score:
+<span id="gradeScore">
+0
+</span>
+
+</div>
+
+
+</div>
+
+
+
+
+<h2 id="totalScore">
+Session Score: 0
+</h2>
+
+
+
+
+<button class="action save"
+onclick="saveSession()">
+Save Session
+</button>
+
+
+<button class="action reset"
+onclick="resetSession()">
+Reset
+</button>
+
+
+<br>
+
+
+<button class="action secondary"
+id="viewLastSummaryBtn"
+onclick="openSummaryModal(getLastSession())"
+style="display:none;">
+🏆 View Last Summary
+</button>
+
+
+</div>
+
+
+
+
+
+<!-- PROGRESS PAGE -->
+
+
+<div id="progressPage">
+
+
+
+<div class="card">
+
+
+<h2 style="text-align:center;">📈 Progress</h2>
+
+
+<div class="segmented" id="rangeSegmented">
+
+<button data-range="W" onclick="setRange('W')">W</button>
+<button data-range="M" onclick="setRange('M')">M</button>
+<button data-range="6M" onclick="setRange('6M')">6M</button>
+<button data-range="Y" onclick="setRange('Y')">Y</button>
+
+</div>
+
+
+<div class="rangeNav">
+
+<button id="rangePrev" onclick="shiftRange(-1)">‹</button>
+<span class="rangeLabel" id="rangeLabel">This Week</span>
+<button id="rangeNext" onclick="shiftRange(1)">›</button>
+
+</div>
+
+
+<div class="summaryBig" id="summaryTotal">0</div>
+
+<div class="summarySub" id="summarySub">Total Score</div>
+
+
+<canvas id="totalChart" height="220"></canvas>
+
+
+</div>
+
+
+
+<div class="card">
+
+
+<h3 style="text-align:center;">Grade Score History</h3>
+
+
+<div class="segmented" id="gradeRangeSegmented">
+
+<button data-range="W" onclick="setGradeRange('W')">W</button>
+<button data-range="M" onclick="setGradeRange('M')">M</button>
+<button data-range="6M" onclick="setGradeRange('6M')">6M</button>
+<button data-range="Y" onclick="setGradeRange('Y')">Y</button>
+
+</div>
+
+
+<div class="rangeNav">
+
+<button id="gradeRangePrev" onclick="shiftGradeRange(-1)">‹</button>
+<span class="rangeLabel" id="gradeRangeLabel">This Week</span>
+<button id="gradeRangeNext" onclick="shiftGradeRange(1)">›</button>
+
+</div>
+
+
+<canvas id="gradeChart" height="220"></canvas>
+
+
+
+</div>
+
+
+
+
+
+<div class="card">
+
+
+<h3>Add Previous Session</h3>
+
+
+<div class="row" style="justify-content:flex-start; gap:10px;">
+
+<span style="font-size:16px;">Date</span>
+
+<input id="oldDate" type="date">
+
+</div>
+
+
+<div class="gradeButtons" id="prevGradeButtons"></div>
+
+
+<h3 id="prevGradeTitle">Grade 1</h3>
+
+
+<div class="row">
+
+Attempts
+
+<div>
+
+<button class="smallBtn" onclick="changePrev('attempts',-1)">−</button>
+<span id="prevAttempts" class="counter">0</span>
+<button class="smallBtn" onclick="changePrev('attempts',1)">+</button>
+
+</div>
+
+</div>
+
+
+<div class="row">
+
+Tops
+
+<div>
+
+<button class="smallBtn" onclick="changePrev('tops',-1)">−</button>
+<span id="prevTops" class="counter">0</span>
+<button class="smallBtn" onclick="changePrev('tops',1)">+</button>
+
+</div>
+
+</div>
+
+
+<div class="row">
+
+Session Flash
+
+<div>
+
+<button class="smallBtn" onclick="changePrev('soft',-1)">−</button>
+<span id="prevSoft" class="counter">0</span>
+<button class="smallBtn" onclick="changePrev('soft',1)">+</button>
+
+</div>
+
+</div>
+
+
+<div class="row">
+
+Flash
+
+<div>
+
+<button class="smallBtn" onclick="changePrev('falls',-1)">−</button>
+<span id="prevFalls" class="counter">0</span>
+<button class="smallBtn" onclick="changePrev('falls',1)">+</button>
+
+</div>
+
+</div>
+
+
+<div class="score">
+
+Grade Score:
+<span id="prevGradeScore">0</span>
+
+</div>
+
+
+<div class="score">
+
+Session Total:
+<span id="prevTotalScore">0</span>
+
+</div>
+
+
+<button class="action save" onclick="addPreviousSession()">Add</button>
+
+<button class="action reset" onclick="resetPrevSession()">Clear</button>
+
+
+</div>
+
+
+
+
+
+<div class="card">
+
+
+<h3>History</h3>
+
+<div id="history"
+class="history">
+</div>
+
+
+
+<button class="action reset"
+onclick="deleteData()">
+Delete All Data
+</button>
+
+
+</div>
+
+
+
+</div>
+
+
+
+<!-- SESSION SUMMARY MODAL -->
+
+<div class="modalOverlay" id="summaryModal">
+
+<div class="modalCard">
+
+<div class="modalTitle">🎉 Session Complete!</div>
+<div class="modalDate" id="modalDate"></div>
+
+<div class="modalTotal" id="modalTotal">0</div>
+
+<div id="modalGradeList"></div>
+
+<button class="modalClose" onclick="closeSummaryModal()">Close</button>
+
+</div>
+
+</div>
+
+
+
+
+<script>
+
+const numberOfGrades = 8;
+
+let currentGrade = 1;
+
+let prevCurrentGrade = 1;
+
+let currentRange = "W";
+
+let rangeOffset = 0;
+
+let gradeRange = "W";
+
+let gradeRangeOffset = 0;
+
+
+// Store current session
+let sessionData = {};
+
+// Store previous-session-entry data
+let prevSessionData = {};
+
+
+for(let i = 1; i <= numberOfGrades; i++){
+
+    sessionData[i] = {
+
+        attempts:0,
+        tops:0,
+        soft:0,
+        falls:0
+
+    };
+
+
+    prevSessionData[i] = {
+
+        attempts:0,
+        tops:0,
+        soft:0,
+        falls:0
+
+    };
+
+}
+
+
+
+// Grade color palette
+
+const gradeColors = {
+
+    1: "#ff2d78",  // pink
+    2: "#ff3b30",  // red
+    3: "#ff6f00",  // deep orange
+    4: "#f9a825",  // deep yellow
+    5: "#34c759",  // green
+    6: "#0d47a1",  // dark blue
+    7: "#4a148c",  // dark purple
+    8: "#000000"   // black
+
+};
+
+
+function gradeTextColor(grade){
+
+    // deep yellow needs dark text for contrast, everything else white
+
+    return grade === 4 ? "#000000" : "#ffffff";
+
+}
+
+
+
+// Create grade buttons (session page)
+
+const gradeButtons =
+document.getElementById("gradeButtons");
+
+
+for(let i=1;i<=numberOfGrades;i++){
+
+    let button =
+    document.createElement("button");
+
+    button.innerHTML = i;
+
+    button.style.background = gradeColors[i];
+
+    button.style.color = gradeTextColor(i);
+
+    button.onclick = function(){
+
+        selectGrade(i);
+
+    };
+
+    gradeButtons.appendChild(button);
+
+}
+
+
+
+// Create grade buttons (add-previous-session page)
+
+const prevGradeButtons =
+document.getElementById("prevGradeButtons");
+
+
+for(let i=1;i<=numberOfGrades;i++){
+
+    let button =
+    document.createElement("button");
+
+    button.innerHTML = i;
+
+    button.style.background = gradeColors[i];
+
+    button.style.color = gradeTextColor(i);
+
+    button.onclick = function(){
+
+        selectPrevGrade(i);
+
+    };
+
+    prevGradeButtons.appendChild(button);
+
+}
+
+
+
+
+function selectGrade(grade){
+
+    currentGrade = grade;
+
+
+    document.getElementById("gradeTitle").innerHTML =
+    "Grade " + grade;
+
+
+
+    document.querySelectorAll("#gradeButtons button")
+    .forEach((button,index)=>{
+
+        button.classList.remove("selected");
+
+
+        if(index+1 === grade){
+
+            button.classList.add("selected");
+
+        }
+
+    });
+
+
+    updateDisplay();
+
+}
+
+
+
+
+function selectPrevGrade(grade){
+
+    prevCurrentGrade = grade;
+
+
+    document.getElementById("prevGradeTitle").innerHTML =
+    "Grade " + grade;
+
+
+
+    document.querySelectorAll("#prevGradeButtons button")
+    .forEach((button,index)=>{
+
+        button.classList.remove("selected");
+
+
+        if(index+1 === grade){
+
+            button.classList.add("selected");
+
+        }
+
+    });
+
+
+    updatePrevDisplay();
+
+}
+
+
+
+
+function change(type,value){
+
+
+    sessionData[currentGrade][type] += value;
+
+
+    if(sessionData[currentGrade][type] < 0){
+
+        sessionData[currentGrade][type] = 0;
+
+    }
+
+
+    updateDisplay();
+
+}
+
+
+
+
+function changePrev(type,value){
+
+
+    prevSessionData[prevCurrentGrade][type] += value;
+
+
+    if(prevSessionData[prevCurrentGrade][type] < 0){
+
+        prevSessionData[prevCurrentGrade][type] = 0;
+
+    }
+
+
+    updatePrevDisplay();
+
+}
+
+
+
+
+function calculateGradeScoreFor(data, grade){
+
+
+    let d = data[grade];
+
+
+    return grade *
+    (
+        0.25*d.attempts +
+        d.tops +
+        1.5*d.soft +
+        2*d.falls
+    );
+
+}
+
+
+
+
+function calculateTotalFor(data){
+
+
+    let total = 0;
+
+
+    for(let i=1;i<=numberOfGrades;i++){
+
+        total += calculateGradeScoreFor(data, i);
+
+    }
+
+
+    return total;
+
+}
+
+
+
+function calculateGradeScore(grade){
+
+    return calculateGradeScoreFor(sessionData, grade);
+
+}
+
+
+function calculateTotal(){
+
+    return calculateTotalFor(sessionData);
+
+}
+
+
+
+
+function updateDisplay(){
+
+
+    let data =
+    sessionData[currentGrade];
+
+
+    document.getElementById("attempts").innerHTML =
+    data.attempts;
+
+
+    document.getElementById("tops").innerHTML =
+    data.tops;
+
+
+    document.getElementById("soft").innerHTML =
+    data.soft;
+
+
+    document.getElementById("falls").innerHTML =
+    data.falls;
+
+
+
+    document.getElementById("gradeScore").innerHTML =
+    calculateGradeScore(currentGrade)
+    .toFixed(2);
+
+
+
+    document.getElementById("totalScore").innerHTML =
+    "Session Score: " +
+    calculateTotal().toFixed(2);
+
+
+}
+
+
+
+
+function updatePrevDisplay(){
+
+
+    let data =
+    prevSessionData[prevCurrentGrade];
+
+
+    document.getElementById("prevAttempts").innerHTML = data.attempts;
+    document.getElementById("prevTops").innerHTML = data.tops;
+    document.getElementById("prevSoft").innerHTML = data.soft;
+    document.getElementById("prevFalls").innerHTML = data.falls;
+
+
+    document.getElementById("prevGradeScore").innerHTML =
+    calculateGradeScoreFor(prevSessionData, prevCurrentGrade).toFixed(2);
+
+
+    document.getElementById("prevTotalScore").innerHTML =
+    calculateTotalFor(prevSessionData).toFixed(2);
+
+
+}
+
+
+
+
+function buildGradeScores(data){
+
+    let gradeScores = {};
+
+    for(let i=1;i<=numberOfGrades;i++){
+
+        gradeScores[i] = Number(
+            calculateGradeScoreFor(data, i).toFixed(2)
+        );
+
+    }
+
+    return gradeScores;
+
+}
+
+
+
+
+function buildGradeDetails(data){
+
+    // keeps raw counts too, so the summary modal can show a breakdown
+
+    let details = {};
+
+    for(let i=1;i<=numberOfGrades;i++){
+
+        details[i] = { ...data[i] };
+
+    }
+
+    return details;
+
+}
+
+
+
+
+function saveSession(){
+
+
+    let sessions =
+    JSON.parse(
+        localStorage.getItem("sessions")
+    ) || [];
+
+
+
+    let today =
+    new Date()
+    .toISOString()
+    .split("T")[0];
+
+
+
+    let entry = {
+
+        date: today,
+
+        total: Number(calculateTotal().toFixed(2)),
+
+        grades: buildGradeScores(sessionData),
+
+        details: buildGradeDetails(sessionData)
+
+    };
+
+
+
+    sessions.push(entry);
+
+
+    localStorage.setItem(
+        "sessions",
+        JSON.stringify(sessions)
+    );
+
+
+    localStorage.setItem(
+        "lastSession",
+        JSON.stringify(entry)
+    );
+
+
+    document.getElementById("viewLastSummaryBtn").style.display = "inline-block";
+
+
+    openSummaryModal(entry);
+
+
+}
+
+
+
+
+function getLastSession(){
+
+    return JSON.parse(
+        localStorage.getItem("lastSession")
+    );
+
+}
+
+
+
+
+function openSummaryModal(entry){
+
+
+    if(!entry) return;
+
+
+    document.getElementById("modalDate").innerHTML = entry.date;
+
+    document.getElementById("modalTotal").innerHTML =
+    entry.total.toFixed ? entry.total.toFixed(2) : entry.total;
+
+
+    let list = document.getElementById("modalGradeList");
+
+    list.innerHTML = "";
+
+
+    for(let i=1;i<=numberOfGrades;i++){
+
+        let score = entry.grades ? entry.grades[i] : null;
+
+        if(!score) continue;
+
+
+        let d = entry.details ? entry.details[i] : null;
+
+
+        let row = document.createElement("div");
+
+        row.className = "gradeRow";
+
+        row.style.borderLeft = "6px solid " + gradeColors[i];
+
+
+        let detailText = d
+            ? d.attempts + " att · " + d.tops + " tops · " + d.soft + " session flash · " + d.falls + " flash"
+            : "";
+
+
+        row.innerHTML =
+            "<div><div class='g'>Grade " + i + "</div>" +
+            "<div class='detail'>" + detailText + "</div></div>" +
+            "<div class='g'>" + score.toFixed(2) + "</div>";
+
+
+        list.appendChild(row);
+
+    }
+
+
+    document.getElementById("summaryModal").classList.add("show");
+
+
+}
+
+
+
+
+function closeSummaryModal(){
+
+    document.getElementById("summaryModal").classList.remove("show");
+
+}
+
+
+
+
+function resetSession(){
+
+
+    for(let i=1;i<=numberOfGrades;i++){
+
+        sessionData[i]={
+
+            attempts:0,
+            tops:0,
+            soft:0,
+            falls:0
+
+        };
+
+    }
+
+
+    updateDisplay();
+
+
+}
+
+
+
+
+function resetPrevSession(){
+
+
+    for(let i=1;i<=numberOfGrades;i++){
+
+        prevSessionData[i]={
+
+            attempts:0,
+            tops:0,
+            soft:0,
+            falls:0
+
+        };
+
+    }
+
+
+    prevCurrentGrade = 1;
+
+    selectPrevGrade(1);
+
+
+}
+
+
+
+
+function showSession(){
+
+
+    document.getElementById("sessionPage")
+    .style.display="block";
+
+
+    document.getElementById("progressPage")
+    .style.display="none";
+
+
+
+    document.getElementById("sessionButton")
+    .classList.add("active");
+
+
+    document.getElementById("progressButton")
+    .classList.remove("active");
+
+
+}
+
+
+
+
+function showProgress(){
+
+
+    document.getElementById("sessionPage")
+    .style.display="none";
+
+
+    document.getElementById("progressPage")
+    .style.display="block";
+
+
+
+    document.getElementById("progressButton")
+    .classList.add("active");
+
+
+    document.getElementById("sessionButton")
+    .classList.remove("active");
+
+
+
+    loadHistory();
+
+    drawCharts();
+
+
+}
+
+
+
+
+function addPreviousSession(){
+
+
+    let date =
+    document.getElementById("oldDate").value;
+
+
+    let total = calculateTotalFor(prevSessionData);
+
+
+    if(!date || total <= 0){
+
+        alert("Enter a date and at least one grade result");
+
+        return;
+
+    }
+
+
+
+    let sessions =
+    JSON.parse(
+    localStorage.getItem("sessions")
+    ) || [];
+
+
+
+    sessions.push({
+
+        date:date,
+
+        total: Number(total.toFixed(2)),
+
+        grades: buildGradeScores(prevSessionData),
+
+        details: buildGradeDetails(prevSessionData)
+
+    });
+
+
+
+    localStorage.setItem(
+        "sessions",
+        JSON.stringify(sessions)
+    );
+
+
+
+    resetPrevSession();
+
+    document.getElementById("oldDate").value = "";
+
+
+    loadHistory();
+
+    drawCharts();
+
+
+}
+
+
+
+function deleteData(){
+
+
+    if(confirm("Delete all saved sessions?")){
+
+
+        localStorage.removeItem("sessions");
+
+        localStorage.removeItem("lastSession");
+
+
+        document.getElementById("viewLastSummaryBtn").style.display = "none";
+
+
+        loadHistory();
+
+        drawCharts();
+
+
+    }
+
+
+}
+
+
+
+
+
+function loadHistory(){
+
+
+    let sessions =
+    JSON.parse(
+    localStorage.getItem("sessions")
+    ) || [];
+
+
+
+    let box =
+    document.getElementById("history");
+
+
+    box.innerHTML="";
+
+
+
+    sessions.slice().reverse().forEach(session=>{
+
+
+        let div =
+        document.createElement("div");
+
+        let left = document.createElement("span");
+        left.innerHTML = session.date;
+
+        let right = document.createElement("span");
+        right.innerHTML = "Score: " + session.total;
+
+        div.appendChild(left);
+        div.appendChild(right);
+
+
+
+        box.appendChild(div);
+
+
+
+    });
+
+
+}
+
+
+
+
+// ---------- Apple-Health-style range chart logic ----------
+
+
+function setRange(range){
+
+    currentRange = range;
+
+    rangeOffset = 0;
+
+
+    document.querySelectorAll("#rangeSegmented button")
+    .forEach(btn=>{
+
+        btn.classList.toggle("active", btn.dataset.range === range);
+
+    });
+
+
+    drawTotalChart();
+
+}
+
+
+
+
+function shiftRange(direction){
+
+    // don't allow moving into the future
+
+    if(direction > 0 && rangeOffset >= 0) return;
+
+
+    rangeOffset += direction;
+
+    drawTotalChart();
+
+}
+
+
+
+
+function setGradeRange(range){
+
+    gradeRange = range;
+
+    gradeRangeOffset = 0;
+
+
+    document.querySelectorAll("#gradeRangeSegmented button")
+    .forEach(btn=>{
+
+        btn.classList.toggle("active", btn.dataset.range === range);
+
+    });
+
+
+    drawGradeChart();
+
+}
+
+
+
+
+function shiftGradeRange(direction){
+
+    // don't allow moving into the future
+
+    if(direction > 0 && gradeRangeOffset >= 0) return;
+
+
+    gradeRangeOffset += direction;
+
+    drawGradeChart();
+
+}
+
+
+
+
+function startOfDay(d){
+
+    let x = new Date(d);
+    x.setHours(0,0,0,0);
+    return x;
+
+}
+
+
+
+
+function getBucketConfig(range){
+
+    if(range === "W") return { count:7, unit:"day" };
+    if(range === "M") return { count:30, unit:"day" };
+    if(range === "6M") return { count:26, unit:"week" };
+
+    return { count:12, unit:"month" };
+
+}
+
+
+
+
+function addUnit(date, unit, amount){
+
+    let d = new Date(date);
+
+    if(unit === "day") d.setDate(d.getDate() + amount);
+    else if(unit === "week") d.setDate(d.getDate() + amount*7);
+    else d.setMonth(d.getMonth() + amount);
+
+    return d;
+
+}
+
+
+
+
+function formatBucketLabel(date, unit){
+
+    if(unit === "day") return date.toLocaleDateString(undefined,{weekday:"short"});
+
+    if(unit === "week") return date.toLocaleDateString(undefined,{month:"short",day:"numeric"});
+
+    return date.toLocaleDateString(undefined,{month:"short"});
+
+}
+
+
+
+
+function formatRangeLabel(range, offset){
+
+    let names = { "W":"Week", "M":"Month", "6M":"6 Months", "Y":"Year" };
+
+    if(offset === 0) return "This " + names[range];
+
+    if(offset === -1) return "Last " + names[range];
+
+    return Math.abs(offset) + " " + names[range] + "s Ago";
+
+}
+
+
+
+
+function getAggregatedData(sessions, range, offset){
+
+
+    let config = getBucketConfig(range);
+
+    let today = startOfDay(new Date());
+
+
+    // shift the whole window by offset * (count buckets)
+
+    let windowShift = offset * config.count;
+
+
+    let bucketStarts = [];
+
+
+    for(let i = config.count - 1; i >= 0; i--){
+
+        let start = addUnit(today, config.unit, -(i) + windowShift);
+
+        bucketStarts.push(start);
+
+    }
+
+
+
+    let labels = bucketStarts.map(d => formatBucketLabel(d, config.unit));
+
+
+    let totals = new Array(config.count).fill(0);
+
+
+    let gradeSeries = {};
+
+    for(let g=1; g<=numberOfGrades; g++){
+
+        gradeSeries[g] = new Array(config.count).fill(0);
+
+    }
+
+
+
+    sessions.forEach(session=>{
+
+
+        let sDate = startOfDay(new Date(session.date + "T00:00:00"));
+
+
+        for(let i=0; i<bucketStarts.length; i++){
+
+
+            let bucketStart = bucketStarts[i];
+
+            let bucketEnd = addUnit(bucketStart, config.unit, 1);
+
+
+            if(sDate >= bucketStart && sDate < bucketEnd){
+
+
+                totals[i] += session.total;
+
+
+                if(session.grades){
+
+                    for(let g=1; g<=numberOfGrades; g++){
+
+                        if(session.grades[g]){
+
+                            gradeSeries[g][i] += session.grades[g];
+
+                        }
+
+                    }
+
+                }
+
+
+                break;
+
+            }
+
+        }
+
+    });
+
+
+
+    return {
+
+        labels: labels,
+
+        totals: totals,
+
+        gradeSeries: gradeSeries,
+
+        rangeStart: bucketStarts[0],
+
+        rangeEnd: addUnit(bucketStarts[bucketStarts.length-1], config.unit, 1)
+
+    };
+
+
+}
+
+
+
+
+function drawTotalChart(){
+
+
+    let sessions =
+    JSON.parse(
+        localStorage.getItem("sessions")
+    ) || [];
+
+
+
+    let agg = getAggregatedData(sessions, currentRange, rangeOffset);
+
+
+
+    // update label / nav / summary
+
+    document.getElementById("rangeLabel").innerHTML =
+    formatRangeLabel(currentRange, rangeOffset);
+
+
+    document.getElementById("rangeNext").disabled = (rangeOffset >= 0);
+
+
+    let sum = agg.totals.reduce((a,b)=>a+b, 0);
+
+    document.getElementById("summaryTotal").innerHTML = sum.toFixed(0);
+
+
+    document.getElementById("summarySub").innerHTML =
+        "Total Score · " +
+        agg.rangeStart.toLocaleDateString(undefined,{month:"short",day:"numeric"}) +
+        " – " +
+        new Date(agg.rangeEnd.getTime()-86400000).toLocaleDateString(undefined,{month:"short",day:"numeric"});
+
+
+
+    // TOTAL SCORE CHART (Apple Health style bars)
+
+    let totalCanvas =
+    document.getElementById("totalChart");
+
+
+    if(window.totalChartInstance){
+
+        window.totalChartInstance.destroy();
+
+    }
+
+
+
+    window.totalChartInstance =
+    new Chart(totalCanvas, {
+
+        type:"bar",
+
+        data:{
+
+            labels: agg.labels,
+
+            datasets:[{
+
+                label:"Score",
+
+                data: agg.totals,
+
+                backgroundColor:"#ff9500",
+
+                borderRadius:6,
+
+                borderSkipped:false,
+
+                maxBarThickness: 28
+
+            }]
+
+        },
+
+
+        options:{
+
+            responsive:true,
+
+            plugins:{
+
+                legend:{ display:false }
+
+            },
+
+            scales:{
+
+                y:{
+
+                    beginAtZero:true
+
+                },
+
+                x:{
+
+                    grid:{ display:false }
+
+                }
+
+            }
+
+        }
+
+
+    });
+
+
+}
+
+
+
+
+function drawGradeChart(){
+
+
+    let sessions =
+    JSON.parse(
+        localStorage.getItem("sessions")
+    ) || [];
+
+
+
+    let agg = getAggregatedData(sessions, gradeRange, gradeRangeOffset);
+
+
+
+    document.getElementById("gradeRangeLabel").innerHTML =
+    formatRangeLabel(gradeRange, gradeRangeOffset);
+
+
+    document.getElementById("gradeRangeNext").disabled = (gradeRangeOffset >= 0);
+
+
+
+    // GRADE SCORE HISTORY CHART
+
+
+    let gradeDatasets=[];
+
+
+
+    for(let grade=1; grade<=numberOfGrades; grade++){
+
+
+        gradeDatasets.push({
+
+            label:"Grade "+grade,
+
+
+            data: agg.gradeSeries[grade],
+
+
+            borderColor: gradeColors[grade],
+
+            backgroundColor: gradeColors[grade],
+
+            tension:0.3,
+
+            borderWidth:2,
+
+            pointRadius:2
+
+
+        });
+
+
+    }
+
+
+
+
+    let gradeCanvas =
+    document.getElementById("gradeChart");
+
+
+
+    if(window.gradeChartInstance){
+
+        window.gradeChartInstance.destroy();
+
+    }
+
+
+
+
+    window.gradeChartInstance =
+    new Chart(gradeCanvas, {
+
+
+        type:"line",
+
+
+        data:{
+
+
+            labels: agg.labels,
+
+
+            datasets:gradeDatasets
+
+
+        },
+
+
+        options:{
+
+
+            responsive:true,
+
+
+            scales:{
+
+
+                y:{
+
+                    beginAtZero:true
+
+                }
+
+
+            }
+
+
+        }
+
+
+    });
+
+
+
+}
+
+
+
+
+function drawCharts(){
+
+    drawTotalChart();
+
+    drawGradeChart();
+
+}
+
+
+
+
+
+// ---------- init ----------
+
+
+selectGrade(1);
+
+selectPrevGrade(1);
+
+document.querySelectorAll("#rangeSegmented button")
+.forEach(btn=>{ btn.classList.toggle("active", btn.dataset.range === currentRange); });
+
+document.querySelectorAll("#gradeRangeSegmented button")
+.forEach(btn=>{ btn.classList.toggle("active", btn.dataset.range === gradeRange); });
+
+drawCharts();
+
+
+if(getLastSession()){
+
+    document.getElementById("viewLastSummaryBtn").style.display = "inline-block";
+
+}
+
+
+</script>
+
+
+
+
+</body>
+
+</html>
