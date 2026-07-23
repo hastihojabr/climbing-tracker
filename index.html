@@ -13,7 +13,9 @@
 
 <title>Climbing Tracker</title>
 
+
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
 
 <style>
@@ -24,9 +26,6 @@ body {
     margin:0;
     padding:20px;
     text-align:center;
-    touch-action: manipulation;
-    -webkit-user-select: none;
-    user-select: none;
 }
 
 
@@ -81,7 +80,8 @@ h1 {
     justify-content:center;
 
     margin-bottom:18px;
-    margin-top:18px;
+        margin-top:18px;
+
 
 }
 
@@ -167,7 +167,7 @@ h1 {
 
 #sessionGradeScoreRow {
 
-    font-size:24px;
+    font-size:22px;
 
 }
 
@@ -490,7 +490,8 @@ canvas {
 
 
 
-<h1><img src="icon2.png" alt="Bouldering icon" style="width:36px; height:36px; vertical-align:middle; border-radius:8px; margin-bottom:3px ;margin-right:8px,;"> Climbing Tracker</h1>
+<h1><img src="icon2.png" alt="Bouldering icon" style="width:36px; height:36px; vertical-align:middle; border-radius:8px; margin-bottom:4px ;margin-right:8px,;"> Climbing Tracker</h1>
+
 
 
 <div class="nav">
@@ -919,11 +920,35 @@ Delete All Data
 
 <div id="modalGradeList"></div>
 
+<button class="action save" style="width:100%; box-sizing:border-box; margin:15px 0 0 0;" onclick="shareSessionImage()">📸 Save / Share as Image</button>
+
 <button class="modalClose" onclick="closeSummaryModal()">Close</button>
 
 </div>
 
 </div>
+
+
+
+<!-- Hidden story card, rendered off-screen and captured as an image -->
+
+<div id="storyCard" style="position:fixed; left:-9999px; top:0; width:1080px; height:1920px; background:linear-gradient(160deg,#1c1c1e 0%,#3a1c71 45%,#007aff 100%); color:white; font-family:-apple-system,BlinkMacSystemFont,Arial,sans-serif; box-sizing:border-box; padding:100px 80px; text-align:center;">
+
+<div style="font-size:60px; font-weight:700; opacity:0.9;">🧗 Bouldering</div>
+
+<div style="font-size:44px; font-weight:600; margin-top:40px; opacity:0.85;" id="storyDate">Today</div>
+
+<div style="font-size:52px; font-weight:700; margin-top:70px; opacity:0.9;">Session Complete 🎉</div>
+
+<div style="font-size:220px; font-weight:800; margin-top:40px; line-height:1;" id="storyTotal">0</div>
+
+<div style="font-size:36px; opacity:0.8; margin-top:0px; margin-bottom:60px;">Session Score</div>
+
+<div id="storyGradeList" style="display:flex; flex-direction:column; gap:18px; text-align:left; margin-top:20px;"></div>
+
+</div>
+
+
 
 
 
@@ -1392,10 +1417,16 @@ function getLastSession(){
 
 
 
+let currentSummaryEntry = null;
+
+
 function openSummaryModal(entry){
 
 
     if(!entry) return;
+
+
+    currentSummaryEntry = entry;
 
 
     document.getElementById("modalDate").innerHTML = entry.date;
@@ -1443,6 +1474,136 @@ function openSummaryModal(entry){
 
 
     document.getElementById("summaryModal").classList.add("show");
+
+
+}
+
+
+
+
+async function shareSessionImage(){
+
+
+    let entry = currentSummaryEntry;
+
+    if(!entry) return;
+
+
+    // fill in the hidden story card
+
+    document.getElementById("storyDate").innerHTML = entry.date;
+
+    document.getElementById("storyTotal").innerHTML =
+    entry.total.toFixed ? entry.total.toFixed(0) : entry.total;
+
+
+    let list = document.getElementById("storyGradeList");
+
+    list.innerHTML = "";
+
+
+    for(let i=1;i<=numberOfGrades;i++){
+
+        let score = entry.grades ? entry.grades[i] : null;
+
+        if(!score) continue;
+
+
+        let row = document.createElement("div");
+
+        row.style.display = "flex";
+        row.style.alignItems = "center";
+        row.style.gap = "20px";
+        row.style.background = "rgba(255,255,255,0.12)";
+        row.style.borderRadius = "20px";
+        row.style.padding = "20px 28px";
+
+
+        row.innerHTML =
+            "<div style='width:26px; height:26px; border-radius:50%; background:" + gradeColors[i] + "; flex-shrink:0;'></div>" +
+            "<div style='font-size:34px; font-weight:600; flex:1;'>Grade " + i + "</div>" +
+            "<div style='font-size:34px; font-weight:700;'>" + score.toFixed(2) + "</div>";
+
+
+        list.appendChild(row);
+
+    }
+
+
+
+    let card = document.getElementById("storyCard");
+
+
+    try{
+
+        let canvas = await html2canvas(card, {
+
+            backgroundColor: null,
+            scale: 1,
+            useCORS: true
+
+        });
+
+
+        canvas.toBlob(async function(blob){
+
+
+            let file = new File([blob], "session-" + entry.date + ".png", { type:"image/png" });
+
+
+            if(navigator.canShare && navigator.canShare({ files:[file] })){
+
+
+                try{
+
+                    await navigator.share({
+
+                        files:[file],
+
+                        title:"Bouldering Session",
+
+                        text:"🧗 Session score: " + entry.total
+
+                    });
+
+                    return;
+
+                }catch(err){
+
+                    // user cancelled share sheet, fall through to download
+
+                }
+
+            }
+
+
+            // fallback: trigger a normal download
+
+            let url = URL.createObjectURL(blob);
+
+            let link = document.createElement("a");
+
+            link.href = url;
+
+            link.download = "session-" + entry.date + ".png";
+
+            document.body.appendChild(link);
+
+            link.click();
+
+            document.body.removeChild(link);
+
+            URL.revokeObjectURL(url);
+
+
+        }, "image/png");
+
+
+    }catch(err){
+
+        alert("Couldn't generate the image, please try again.");
+
+    }
 
 
 }
