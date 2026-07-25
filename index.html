@@ -507,7 +507,7 @@ canvas {
 
     font-size:19px;
     font-weight:800;
-    color:#007aff;
+    color:var(--text);
     margin-bottom:4px;
 
 }
@@ -565,6 +565,92 @@ canvas {
     font-weight:600;
     margin-top:15px;
     width:100%;
+
+}
+
+
+.tagSection {
+
+    margin:14px 0;
+
+}
+
+
+.tagSectionHeader {
+
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    cursor:pointer;
+    user-select:none;
+    font-size:14px;
+    font-weight:600;
+    color:var(--text-secondary);
+    padding:2px 0;
+
+}
+
+
+.tagChevron {
+
+    font-size:12px;
+    transition:transform 0.2s;
+    color:var(--text-secondary);
+
+}
+
+
+.tagChevron.open {
+
+    transform:rotate(180deg);
+
+}
+
+
+.tagChips {
+
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px;
+    margin-top:10px;
+
+}
+
+
+.tagChips.collapsed {
+
+    display:none;
+
+}
+
+
+.tagChip {
+
+    padding:6px 12px;
+    border-radius:16px;
+    border:none;
+    font-size:13px;
+    font-weight:600;
+    background:var(--nav-btn-bg);
+    color:var(--text-secondary);
+    cursor:pointer;
+
+}
+
+
+.tagChip.selected {
+
+    background:#007aff;
+    color:white;
+
+}
+
+
+.tagChip.addChip {
+
+    background:transparent;
+    border:1px dashed var(--input-border);
+    color:var(--text-secondary);
 
 }
 
@@ -760,6 +846,16 @@ Session Score: 0
 </h2>
 
 
+<div class="tagSection">
+
+<div class="tagSectionHeader" id="sessionTagsHeader" onclick="toggleTagSection('sessionTagChips','sessionTagsHeaderChevron')">
+<span id="sessionTagsHeaderLabel">Tags</span>
+<span class="tagChevron" id="sessionTagsHeaderChevron">▾</span>
+</div>
+
+<div class="tagChips collapsed" id="sessionTagChips"></div>
+
+</div>
 
 
 <button class="action save"
@@ -801,7 +897,19 @@ style="display:none;">
 <div class="card">
 
 
-<h2 style="text-align:center;">📈 Progress</h2>
+<h3 style="text-align:center;">Progress</h3>
+
+
+<div class="tagSection">
+
+<div class="tagSectionHeader" id="filterTagsHeader" onclick="toggleTagSection('filterTagChips','filterTagsHeaderChevron')" style="justify-content:center; gap:6px;">
+<span id="filterTagsHeaderLabel">Filter by Tag</span>
+<span class="tagChevron" id="filterTagsHeaderChevron">▾</span>
+</div>
+
+<div class="tagChips collapsed" id="filterTagChips" style="justify-content:center;"></div>
+
+</div>
 
 
 <div class="segmented" id="rangeSegmented">
@@ -961,8 +1069,20 @@ Grade Score:
 
 <div class="score">
 
-Session Total:
+Session Score:
 <span id="prevTotalScore">0</span>
+
+</div>
+
+
+<div class="tagSection">
+
+<div class="tagSectionHeader" id="prevSessionTagsHeader" onclick="toggleTagSection('prevSessionTagChips','prevSessionTagsHeaderChevron')">
+<span id="prevSessionTagsHeaderLabel">Tags</span>
+<span class="tagChevron" id="prevSessionTagsHeaderChevron">▾</span>
+</div>
+
+<div class="tagChips collapsed" id="prevSessionTagChips"></div>
 
 </div>
 
@@ -1056,7 +1176,11 @@ Delete All Data
 
 <!-- Hidden story card, rendered off-screen and captured as an image -->
 
-<div id="storyCard" style="position:fixed; left:-9999px; top:0; width:1080px; height:1920px; background:linear-gradient(160deg,#1c1c1e 0%,#3a1c71 45%,#007aff 100%); color:white; font-family:-apple-system,BlinkMacSystemFont,Arial,sans-serif; box-sizing:border-box; padding:90px 70px; text-align:center;">
+<div id="storyCard" style="position:fixed; left:-9999px; top:0; width:1080px; height:1920px;
+
+ background:linear-gradient(160deg,#1c1c1e 0%,#3a1c71 45%,#007aff 100%);
+
+  color:white; font-family:-apple-system,BlinkMacSystemFont,Arial,sans-serif; box-sizing:border-box; padding:90px 70px; text-align:center;">
 
 <img src="icon2.png" style="width:200px; height:200px; border-radius:24px;">
 
@@ -1100,6 +1224,17 @@ let rangeOffset = 0;
 let gradeRange = "W";
 
 let gradeRangeOffset = 0;
+
+
+let sessionTagOptions =
+    JSON.parse(localStorage.getItem("sessionTagOptions")) ||
+    ["Volume Session", "Social Session", "Project Session"];
+
+let selectedSessionTags = [];
+
+let selectedPrevSessionTags = [];
+
+let activeFilterTags = [];
 
 
 // Store current session
@@ -1498,6 +1633,132 @@ function getLocalDateString(d){
 
 
 
+// ---------- session tags ----------
+
+function saveTagOptions(){
+
+    localStorage.setItem(
+        "sessionTagOptions",
+        JSON.stringify(sessionTagOptions)
+    );
+
+}
+
+
+function renderTagChips(containerId, selectedList, includeAddButton){
+
+    let container = document.getElementById(containerId);
+
+    if(!container) return;
+
+    container.innerHTML = "";
+
+
+    sessionTagOptions.forEach(tag=>{
+
+        let chip = document.createElement("button");
+
+        chip.className = "tagChip" + (selectedList.includes(tag) ? " selected" : "");
+        chip.textContent = tag;
+
+        chip.onclick = function(){
+
+            let idx = selectedList.indexOf(tag);
+
+            if(idx === -1){
+                selectedList.push(tag);
+            }else{
+                selectedList.splice(idx, 1);
+            }
+
+            renderAllTagChips();
+
+            if(containerId === "filterTagChips") drawCharts();
+
+        };
+
+        container.appendChild(chip);
+
+    });
+
+
+    if(includeAddButton){
+
+        let addChip = document.createElement("button");
+
+        addChip.className = "tagChip addChip";
+        addChip.textContent = "+ Add";
+
+        addChip.onclick = function(){
+
+            let name = prompt("New tag name:");
+
+            if(!name) return;
+
+            name = name.trim();
+
+            if(!name) return;
+
+            if(!sessionTagOptions.includes(name)){
+
+                sessionTagOptions.push(name);
+                saveTagOptions();
+
+            }
+
+            renderAllTagChips();
+
+        };
+
+        container.appendChild(addChip);
+
+    }
+
+}
+
+
+function toggleTagSection(containerId, chevronId){
+
+    let container = document.getElementById(containerId);
+
+    let chevron = document.getElementById(chevronId);
+
+    if(!container) return;
+
+    container.classList.toggle("collapsed");
+
+    if(chevron) chevron.classList.toggle("open");
+
+}
+
+
+function updateTagHeaderLabel(labelId, baseText, count){
+
+    let el = document.getElementById(labelId);
+
+    if(!el) return;
+
+    el.textContent = count > 0 ? baseText + " · " + count : baseText;
+
+}
+
+
+function renderAllTagChips(){
+
+    renderTagChips("sessionTagChips", selectedSessionTags, true);
+    updateTagHeaderLabel("sessionTagsHeaderLabel", "Tags", selectedSessionTags.length);
+
+    renderTagChips("prevSessionTagChips", selectedPrevSessionTags, true);
+    updateTagHeaderLabel("prevSessionTagsHeaderLabel", "Tags", selectedPrevSessionTags.length);
+
+    renderTagChips("filterTagChips", activeFilterTags, false);
+    updateTagHeaderLabel("filterTagsHeaderLabel", "Filter by Tag", activeFilterTags.length);
+
+}
+
+
+
+
 function saveSession(){
 
 
@@ -1520,7 +1781,9 @@ function saveSession(){
 
         grades: buildGradeScores(sessionData),
 
-        details: buildGradeDetails(sessionData)
+        details: buildGradeDetails(sessionData),
+
+        tags: selectedSessionTags.slice()
 
     };
 
@@ -1981,6 +2244,11 @@ function resetSession(){
     }
 
 
+    selectedSessionTags = [];
+
+    renderAllTagChips();
+
+
     updateDisplay();
 
 
@@ -2009,6 +2277,11 @@ function resetPrevSession(){
     prevCurrentGrade = 1;
 
     selectPrevGrade(1);
+
+
+    selectedPrevSessionTags = [];
+
+    renderAllTagChips();
 
 
 }
@@ -2107,7 +2380,9 @@ function addPreviousSession(){
 
         grades: buildGradeScores(prevSessionData),
 
-        details: buildGradeDetails(prevSessionData)
+        details: buildGradeDetails(prevSessionData),
+
+        tags: selectedPrevSessionTags.slice()
 
     });
 
@@ -2548,6 +2823,29 @@ function formatRangeLabel(range, offset){
 
 
 
+function getFilteredSessions(){
+
+    let sessions =
+    JSON.parse(
+        localStorage.getItem("sessions")
+    ) || [];
+
+
+    if(activeFilterTags.length === 0) return sessions;
+
+
+    return sessions.filter(session=>
+
+        session.tags &&
+        session.tags.some(tag => activeFilterTags.includes(tag))
+
+    );
+
+}
+
+
+
+
 function getAggregatedData(sessions, range, offset){
 
 
@@ -2658,10 +2956,7 @@ function getAggregatedData(sessions, range, offset){
 function drawTotalChart(){
 
 
-    let sessions =
-    JSON.parse(
-        localStorage.getItem("sessions")
-    ) || [];
+    let sessions = getFilteredSessions();
 
 
 
@@ -2781,10 +3076,7 @@ function drawTotalChart(){
 function drawGradeChart(){
 
 
-    let sessions =
-    JSON.parse(
-        localStorage.getItem("sessions")
-    ) || [];
+    let sessions = getFilteredSessions();
 
 
 
@@ -2988,6 +3280,8 @@ if(localStorage.getItem("darkMode") === "1"){
 selectGrade(1);
 
 selectPrevGrade(1);
+
+renderAllTagChips();
 
 document.querySelectorAll("#rangeSegmented button")
 .forEach(btn=>{ btn.classList.toggle("active", btn.dataset.range === currentRange); });
