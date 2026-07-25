@@ -1011,6 +1011,9 @@ Delete All Data
 
 <hr style="border:none; border-top:2px solid rgba(255,255,255,0.25); margin:50px 0;">
 
+<div style="display:flex; padding:0px; margin-bottom:20px; font-size:26px; font-weight:700; opacity:0.65; text-transform:uppercase; letter-spacing:1px;">SCORE DISTRIBUTION</div>
+
+
 <div id="storyGradeList" style="display:flex; flex-direction:column; gap:18px; text-align:left;"></div>
 
 </div>
@@ -1763,11 +1766,27 @@ async function shareSessionImage(){
     list.innerHTML = "";
 
 
+    let maxGradeScore = 0;
+
+    for(let i=1;i<=numberOfGrades;i++){
+
+        let score = entry.grades ? entry.grades[i] : null;
+
+        if(score && score > maxGradeScore) maxGradeScore = score;
+
+    }
+
+
     for(let i=1;i<=numberOfGrades;i++){
 
         let score = entry.grades ? entry.grades[i] : null;
 
         if(!score) continue;
+
+
+        let barPct = maxGradeScore > 0
+            ? Math.max(8, Math.round((score / maxGradeScore) * 100))
+            : 8;
 
 
         let row = document.createElement("div");
@@ -1781,9 +1800,12 @@ async function shareSessionImage(){
 
 
         row.innerHTML =
-            "<div style='width:26px; height:26px; border-radius:50%; background:" + gradeColors[i] + "; flex-shrink:0;'></div>" +
-            "<div style='font-size:34px; font-weight:600; flex:1;'>Grade " + i + "</div>" +
-            "<div style='font-size:34px; font-weight:700;'>" + score.toFixed(2) + "</div>";
+            "<div style='width:70px; font-size:34px; font-weight:700; flex-shrink:0;'>" + i + "</div>" +
+            "<div style='flex:1; background:rgba(255,255,255,0.15); border-radius:10px; height:52px; display:flex; align-items:center;'>" +
+                "<div style='height:100%; width:" + barPct + "%; min-width:60px; background:" + gradeColors[i] + "; border-radius:10px; display:flex; align-items:center; justify-content:flex-end; padding-right:14px; box-sizing:border-box;'>" +
+                    "<span style='font-size:26px; font-weight:800; color:white;'>" + score.toFixed(2) + "</span>" +
+                "</div>" +
+            "</div>";
 
 
         list.appendChild(row);
